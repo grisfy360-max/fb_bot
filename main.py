@@ -58,6 +58,7 @@ async def receive_webhook(request: Request):
     print("Incoming Webhook Data:", data)
     
     if data.get("object") == "page":
+        PAGE_ID = "1074840362368242"
         for entry in data.get("entry", []):
             for change in entry.get("changes", []):
                 value = change.get("value", {})
@@ -69,7 +70,9 @@ async def receive_webhook(request: Request):
                     sender_id = value.get("from", {}).get("id")
                     
                     # পেজ নিজে কমেন্ট করলে যেন লুপ না হয়, তাই সেটি বাদ দেওয়া
-                    # (এখানে আপনার পেজের আইডি চেক করা উচিত)
+                    if sender_id == PAGE_ID:
+                        print("নিজেদের কমেন্ট (বটের রিপ্লাই), তাই স্কিপ করা হলো।")
+                        continue
                     
                     print(f"নতুন কমেন্ট এসেছে: {message}")
                     
