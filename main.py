@@ -6,7 +6,7 @@ app = FastAPI()
 
 # আপনার Facebook ডেভেলপার পোর্টাল থেকে এগুলো পেতে হবে
 VERIFY_TOKEN = "my_custom_secure_token_123"
-PAGE_ACCESS_TOKEN = "EAAf32qRdDAMBSjy1y5aiJwyUzOXpLUZCsZC1QNAHpYd2NoykcZCYDI0q2nDdta9JsN7pR7ovjMbpjv2QdW0ZCzQUGargobi8z0BfRJ0Puakj4li4QZAZB2DGOQECwzNgN6kfP9EZAeV0uy9Lz3AJZBxtitgoOI0DZA3I0FOiFFMR7eyzdxUSm3yj8KKwZCxJYbtwPEVS3oLTLle8T78fLnBGoE1zCyGc4cdCiF2d2enBBYOXoZBzgVBk4GlMVnT8U9FzZAbWADU3oA6lSCQ9DaSeyTSp"
+PAGE_ACCESS_TOKEN = "EAAIpjqXkeewBSjRQLV7NOh3NwG5deKtelCRrz4iV5sayZBprRh4ZAncddNnSzSNzlzUAIA3KY7NHLcORiRsnmVdQ0wkkybsCD4Q1HA7ZAgUI7268fZAcv9ppIzOpX7aVgZBnG9XGdkIrELoMk56Ow9w6GCoNjxGxRZCiMtMjfLxk56ROEBYyuk1VqmTukGUzZA8MA5qDFk1esZBkcjHMTqvB0VJHs029UCYyB6wkWtbYiOthKxzgeXGgHkguvhRi38EbFv9SVBYMQd3e1pR4vuEm"
 
 # AI থেকে ডায়নামিক রিপ্লাই জেনারেট করার ফাংশন
 def get_ai_reply(comment_text):
