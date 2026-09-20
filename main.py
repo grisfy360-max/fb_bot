@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request, Response, BackgroundTasks
 import requests
 import json
 
@@ -73,44 +73,49 @@ async def verify_webhook(request: Request):
             return Response(content=challenge, status_code=200)
     return Response(content="Verification failed", status_code=403)
 
+# ব্যাকগ্রাউন্ডে কমেন্ট প্রসেস করার ফাংশন (যাতে ফেসবুককে সাথে সাথে 200 OK দেওয়া যায়)
+def process_facebook_comment(value):
+    PAGE_ID = "1074840362368242"
+    
+    if value.get("item") == "comment" and value.get("verb") == "add":
+        comment_id = value.get("comment_id")
+        message = value.get("message")
+        sender_id = value.get("from", {}).get("id")
+        sender_name = value.get("from", {}).get("name", "")
+        
+        # পেজ নিজে কমেন্ট করলে যেন লুপ না হয়, তাই সেটি বাদ দেওয়া
+        if sender_id == PAGE_ID:
+            print("নিজেদের কমেন্ট (বটের রিপ্লাই), তাই স্কিপ করা হলো।")
+            return
+        
+        print(f"নতুন কমেন্ট এসেছে: {message} (From: {sender_name})")
+        
+        # AI থেকে রিপ্লাই জেনারেট করা
+        ai_reply = get_ai_reply(message)
+        
+        # স্পেসিফিক ইউজারকে টার্গেট করে মেনশন/নাম যুক্ত করা
+        if sender_name:
+            final_reply = f"@{sender_name} {ai_reply}"
+        else:
+            final_reply = ai_reply
+            
+        print(f"AI রিপ্লাই দিচ্ছে: {final_reply}")
+        
+        # Facebook-এ রিপ্লাই পাঠানো
+        reply_to_facebook_comment(comment_id, final_reply)
+
 # ২. কমেন্ট রিসিভ এবং রিপ্লাই দেওয়া (কেউ কমেন্ট করলে Facebook এখানে ডেটা পাঠাবে)
 @app.post("/webhook")
-async def receive_webhook(request: Request):
+async def receive_webhook(request: Request, background_tasks: BackgroundTasks):
     data = await request.json()
     print("Incoming Webhook Data:", data)
     
     if data.get("object") == "page":
-        PAGE_ID = "1074840362368242"
         for entry in data.get("entry", []):
             for change in entry.get("changes", []):
                 value = change.get("value", {})
-                
-                # চেক করা হচ্ছে এটি কোনো কমেন্ট কি না এবং আমাদের নিজেদের করা রিপ্লাই কি না
-                if change.get("field") == "feed" and value.get("item") == "comment" and value.get("verb") == "add":
-                    comment_id = value.get("comment_id")
-                    message = value.get("message")
-                    sender_id = value.get("from", {}).get("id")
-                    sender_name = value.get("from", {}).get("name", "")
-                    
-                    # পেজ নিজে কমেন্ট করলে যেন লুপ না হয়, তাই সেটি বাদ দেওয়া
-                    if sender_id == PAGE_ID:
-                        print("নিজেদের কমেন্ট (বটের রিপ্লাই), তাই স্কিপ করা হলো।")
-                        continue
-                    
-                    print(f"নতুন কমেন্ট এসেছে: {message} (From: {sender_name})")
-                    
-                    # AI থেকে রিপ্লাই জেনারেট করা
-                    ai_reply = get_ai_reply(message)
-                    
-                    # স্পেসিফিক ইউজারকে টার্গেট করে মেনশন/নাম যুক্ত করা
-                    if sender_name:
-                        final_reply = f"@{sender_name} {ai_reply}"
-                    else:
-                        final_reply = ai_reply
-                        
-                    print(f"AI রিপ্লাই দিচ্ছে: {final_reply}")
-                    
-                    # Facebook-এ রিপ্লাই পাঠানো
-                    reply_to_facebook_comment(comment_id, final_reply)
+                if change.get("field") == "feed":
+                    # মূল কাজটা ব্যাকগ্রাউন্ডে পাঠিয়ে দেওয়া হলো, যাতে ফেসবুক সাথে সাথে 200 OK পায়
+                    background_tasks.add_task(process_facebook_comment, value)
                     
     return Response(content="EVENT_RECEIVED", status_code=200)
