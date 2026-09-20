@@ -7,36 +7,39 @@ app = FastAPI()
 # আপনার Facebook ডেভেলপার পোর্টাল থেকে এগুলো পেতে হবে
 VERIFY_TOKEN = "my_custom_secure_token_123"
 PAGE_ACCESS_TOKEN = "EAAIpjqXkeewBSl87a9Pxa7l3rZCQ8fB9LTpiXLajmkRD49O0ND80YG8j2ZBDXBonMgpvvBl9afoST67NHVEMVn2m15rTZCUhu9WOnqFxZChVIGZCVUZCJaofSg5N7D0uSB04NiUsCVTvErw52DGYirXM4BAfE4jZARhHZBCMXqrQUdrvtXb9ZBgM22q7oybHRu8QHZANZAa2QrAzM51cCDWPG6torfZC26tEZCzn6Lep4QcEZD"
-OPENROUTER_API_KEY = "sk-or-v1-" + "c815c67e095bb5b485c369cdf60df3ef84953d504501778d21268cb8429321d0"
+GEMINI_API_KEY = "AQ.Ab8RN6KYfgon" + "xC7ggBpEfozn_f0MFhFNJqieJp6Shs0S23n5-g"
 
 # AI থেকে ডায়নামিক রিপ্লাই জেনারেট করার ফাংশন
 def get_ai_reply(comment_text):
     try:
         print(f"AI-এর কাছে পাঠানো হচ্ছে: {comment_text}")
         
-        response = requests.post(
-            url="https://openrouter.ai/api/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-                "Content-Type": "application/json"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={GEMINI_API_KEY}"
+        
+        payload = {
+            "systemInstruction": {
+                "parts": [{"text": "You are a friendly human Facebook admin for 'HumanRights' in Bangladesh. CRITICAL RULES: 1. You MUST reply ONLY in pure Bengali script (বাংলা অক্ষরে). 2. NEVER use Chinese, English, or any other language. 3. If the user writes in Banglish, reply in pure Bengali script. 4. Keep it very short (1-2 sentences max). Understand their question and answer directly."}]
             },
-            json={
-                "model": "openrouter/free", # আপনি চাইলে এখানে অন্য মডেল দিতে পারেন
-                "messages": [
-                    {"role": "system", "content": "You are a friendly human Facebook admin for 'HumanRights' in Bangladesh. CRITICAL RULES: 1. You MUST reply ONLY in pure Bengali script (বাংলা অক্ষরে). 2. NEVER use Chinese (中文), English, or any other language under any circumstances. 3. If the user writes in Banglish, reply in pure Bengali script. 4. Keep it very short (1-2 sentences max). Understand their question and answer directly."},
-                    {"role": "user", "content": comment_text}
-                ]
-            }
+            "contents": [
+                {"parts": [{"text": comment_text}]}
+            ]
+        }
+        
+        response = requests.post(
+            url=url,
+            headers={"Content-Type": "application/json"},
+            json=payload
         )
         
         result = response.json()
-        reply_text = result["choices"][0]["message"]["content"]
         
-        # OpenRouter-এর কিছু মডেল reasoning (চিন্তা) করে, যা আমাদের দরকার নেই
+        # জেমিনির রেসপন্স থেকে টেক্সট বের করা
+        reply_text = result.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+        
         if not reply_text:
             reply_text = "আপনার মন্তব্যের জন্য ধন্যবাদ! আমরা শীঘ্রই যোগাযোগ করছি।"
             
-        return reply_text
+        return reply_text.strip()
     except Exception as e:
         print(f"AI Error: {e}")
         return "ধন্যবাদ আপনার মন্তব্যের জন্য! আমরা শীঘ্রই যোগাযোগ করছি।" # AI ফেইল করলে ডিফল্ট রিপ্লাই
