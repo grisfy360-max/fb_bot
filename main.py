@@ -90,19 +90,27 @@ async def receive_webhook(request: Request):
                     comment_id = value.get("comment_id")
                     message = value.get("message")
                     sender_id = value.get("from", {}).get("id")
+                    sender_name = value.get("from", {}).get("name", "")
                     
                     # পেজ নিজে কমেন্ট করলে যেন লুপ না হয়, তাই সেটি বাদ দেওয়া
                     if sender_id == PAGE_ID:
                         print("নিজেদের কমেন্ট (বটের রিপ্লাই), তাই স্কিপ করা হলো।")
                         continue
                     
-                    print(f"নতুন কমেন্ট এসেছে: {message}")
+                    print(f"নতুন কমেন্ট এসেছে: {message} (From: {sender_name})")
                     
                     # AI থেকে রিপ্লাই জেনারেট করা
                     ai_reply = get_ai_reply(message)
-                    print(f"AI রিপ্লাই দিয়েছে: {ai_reply}")
+                    
+                    # স্পেসিফিক ইউজারকে টার্গেট করে মেনশন/নাম যুক্ত করা
+                    if sender_name:
+                        final_reply = f"@{sender_name} {ai_reply}"
+                    else:
+                        final_reply = ai_reply
+                        
+                    print(f"AI রিপ্লাই দিচ্ছে: {final_reply}")
                     
                     # Facebook-এ রিপ্লাই পাঠানো
-                    reply_to_facebook_comment(comment_id, ai_reply)
+                    reply_to_facebook_comment(comment_id, final_reply)
                     
     return Response(content="EVENT_RECEIVED", status_code=200)
