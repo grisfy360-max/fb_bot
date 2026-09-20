@@ -17,7 +17,8 @@ app.add_middleware(
 
 # API Request Model
 class JournalistRequest(BaseModel):
-    text: str
+    postContext: str
+    badComment: str
 
 # আপনার Facebook ডেভেলপার পোর্টাল থেকে এগুলো পেতে হবে
 VERIFY_TOKEN = "my_custom_secure_token_123"
@@ -144,7 +145,7 @@ async def generate_journalist_reply(req: JournalistRequest):
     
     payload = {
         "systemInstruction": {"parts": [{"text": system_prompt}]},
-        "contents": [{"parts": [{"text": req.text}]}]
+        "contents": [{"parts": [{"text": f"মূল পোস্ট: {req.postContext}\n\nনেতিবাচক/ফেক কমেন্ট: {req.badComment}"}]}]
     }
 
     for model_name in models_to_try:
