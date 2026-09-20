@@ -14,9 +14,9 @@ def get_ai_reply(comment_text):
         print(f"AI-এর কাছে পাঠানো হচ্ছে: {comment_text}")
         # g4f ব্যবহার করে ফ্রি GPT-4 কল করা
         response = g4f.ChatCompletion.create(
-            model=g4f.models.gpt_4,
+            model=g4f.models.gpt_35_turbo,
             messages=[
-                {"role": "system", "content": "You are a friendly and helpful Facebook page admin for 'HumanRights' in Bangladesh. Rules: 1. If the user comments in Banglish (Bengali using English letters) or Bengali script, you MUST reply strictly in pure Bengali script (বাংলা অক্ষরে). 2. Keep the reply short, natural, and polite. 3. Understand the context of the user's question and give a direct answer. 4. Never reply in English unless the user writes purely in English. 5. Do not act like an AI, act like a real human admin."},
+                {"role": "system", "content": "You are a friendly human Facebook admin for 'HumanRights' in Bangladesh. CRITICAL RULES: 1. You MUST reply ONLY in pure Bengali script (বাংলা অক্ষরে). 2. NEVER use Chinese (中文), English, or any other language under any circumstances. 3. If the user writes in Banglish, reply in pure Bengali script. 4. Keep it very short (1-2 sentences max). Understand their question and answer directly."},
                 {"role": "user", "content": comment_text}
             ]
         )
