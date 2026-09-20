@@ -55,6 +55,7 @@ async def verify_webhook(request: Request):
 @app.post("/webhook")
 async def receive_webhook(request: Request):
     data = await request.json()
+    print("Incoming Webhook Data:", data)
     
     if data.get("object") == "page":
         for entry in data.get("entry", []):
