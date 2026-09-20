@@ -6,7 +6,7 @@ app = FastAPI()
 
 # আপনার Facebook ডেভেলপার পোর্টাল থেকে এগুলো পেতে হবে
 VERIFY_TOKEN = "my_custom_secure_token_123"
-PAGE_ACCESS_TOKEN = "EAAGm0...আপনার_পেজ_টোকেন_এখানে_বসবে"
+PAGE_ACCESS_TOKEN = "EAAf32qRdDAMBSjy1y5aiJwyUzOXpLUZCsZC1QNAHpYd2NoykcZCYDI0q2nDdta9JsN7pR7ovjMbpjv2QdW0ZCzQUGargobi8z0BfRJ0Puakj4li4QZAZB2DGOQECwzNgN6kfP9EZAeV0uy9Lz3AJZBxtitgoOI0DZA3I0FOiFFMR7eyzdxUSm3yj8KKwZCxJYbtwPEVS3oLTLle8T78fLnBGoE1zCyGc4cdCiF2d2enBBYOXoZBzgVBk4GlMVnT8U9FzZAbWADU3oA6lSCQ9DaSeyTSp"
 
 # AI থেকে ডায়নামিক রিপ্লাই জেনারেট করার ফাংশন
 def get_ai_reply(comment_text):
