@@ -1,8 +1,23 @@
 from fastapi import FastAPI, Request, Response, BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 import requests
 import json
 
 app = FastAPI()
+
+# Chrome Extension-এর জন্য CORS Allow করা
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # Allow all origins for the extension
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# API Request Model
+class JournalistRequest(BaseModel):
+    text: str
 
 # আপনার Facebook ডেভেলপার পোর্টাল থেকে এগুলো পেতে হবে
 VERIFY_TOKEN = "my_custom_secure_token_123"
@@ -119,3 +134,30 @@ async def receive_webhook(request: Request, background_tasks: BackgroundTasks):
                     background_tasks.add_task(process_facebook_comment, value)
                     
     return Response(content="EVENT_RECEIVED", status_code=200)
+
+# ৩. ক্রোম এক্সটেনশনের জন্য স্পেশাল Journalist Assistant API
+@app.post("/journalist-reply")
+async def generate_journalist_reply(req: JournalistRequest):
+    system_prompt = "তুমি একজন অত্যন্ত জ্ঞানী, নিরপেক্ষ এবং দায়িত্বশীল সিনিয়র সাংবাদিক ও মানবাধিকার কর্মী। কেউ যদি দুর্নীতি, অন্ধত্ব বা চাটুকারিতার পক্ষে লেখে, তুমি তার কথার ভেতরের লজিক্যাল ভুলগুলো ধরবে এবং অত্যন্ত মার্জিত, প্রফেশনাল ও শক্ত বাংলায় একটি কাউন্টার-আর্গুমেন্ট (প্রতিবাদ) লিখবে, যাতে তারা সঠিক পথ বুঝতে পারে। কোনো গালাগালি বা অকথ্য ভাষা ব্যবহার করবে না। উত্তরটি হবে ছোট, তীক্ষ্ণ এবং ফ্যাক্ট-ভিত্তিক।"
+    
+    models_to_try = ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite"]
+    
+    payload = {
+        "systemInstruction": {"parts": [{"text": system_prompt}]},
+        "contents": [{"parts": [{"text": req.text}]}]
+    }
+
+    for model_name in models_to_try:
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={GEMINI_API_KEY}"
+            res = requests.post(url, headers={"Content-Type": "application/json"}, json=payload)
+            res.raise_for_status()
+            
+            reply_text = res.json().get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+            if reply_text:
+                return {"success": True, "reply": reply_text.strip()}
+                
+        except Exception as e:
+            continue
+
+    return {"success": False, "reply": "দুঃখিত, সিস্টেমটি সাময়িকভাবে ডাউন আছে। একটু পরে আবার চেষ্টা করুন।"}
