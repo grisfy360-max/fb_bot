@@ -20,6 +20,9 @@ class JournalistRequest(BaseModel):
     postContext: str
     badComment: str
 
+class PostFactCheckRequest(BaseModel):
+    postText: str
+
 # আপনার Facebook ডেভেলপার পোর্টাল থেকে এগুলো পেতে হবে
 VERIFY_TOKEN = "my_custom_secure_token_123"
 PAGE_ACCESS_TOKEN = "EAAIpjqXkeewBSl87a9Pxa7l3rZCQ8fB9LTpiXLajmkRD49O0ND80YG8j2ZBDXBonMgpvvBl9afoST67NHVEMVn2m15rTZCUhu9WOnqFxZChVIGZCVUZCJaofSg5N7D0uSB04NiUsCVTvErw52DGYirXM4BAfE4jZARhHZBCMXqrQUdrvtXb9ZBgM22q7oybHRu8QHZANZAa2QrAzM51cCDWPG6torfZC26tEZCzn6Lep4QcEZD"
@@ -162,3 +165,30 @@ async def generate_journalist_reply(req: JournalistRequest):
             continue
 
     return {"success": False, "reply": "দুঃখিত, সিস্টেমটি সাময়িকভাবে ডাউন আছে। একটু পরে আবার চেষ্টা করুন।"}
+
+# ৪. মেইন পোস্ট ফ্যাক্ট-চেক করার API
+@app.post("/factcheck-post")
+async def factcheck_main_post(req: PostFactCheckRequest):
+    system_prompt = "তুমি একজন নিরপেক্ষ ও দক্ষ ফ্যাক্ট-চেকার। নিচে একটি ফেসবুক পোস্টের টেক্সট এবং ছবির ক্যাপশন দেওয়া হলো। তুমি এটি বিশ্লেষণ করে ২-৩ লাইনে জানাবে যে পোস্টের দাবিটি সত্য, মিথ্যা, নাকি বিভ্রান্তিকর। শুধু মূল পয়েন্টটি ধরিয়ে দেবে।"
+    
+    models_to_try = ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite"]
+    
+    payload = {
+        "systemInstruction": {"parts": [{"text": system_prompt}]},
+        "contents": [{"parts": [{"text": f"ফেসবুক পোস্ট: {req.postText}"}]}]
+    }
+
+    for model_name in models_to_try:
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={GEMINI_API_KEY}"
+            res = requests.post(url, headers={"Content-Type": "application/json"}, json=payload)
+            res.raise_for_status()
+            
+            reply_text = res.json().get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+            if reply_text:
+                return {"success": True, "reply": reply_text.strip()}
+                
+        except Exception as e:
+            continue
+
+    return {"success": False, "reply": "ফ্যাক্ট-চেক ব্যর্থ হয়েছে।"}
